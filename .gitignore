@@ -24,6 +24,10 @@ Build.bat
 # Module::Install
 inc/
 
+# plx
+/.plx/
+/local/
+
 # ExtUtils::MakeMaker
 /blib/
 /_eumm/
@@ -33,3 +37,8 @@ inc/
 /MANIFEST.bak
 /pm_to_blib
 /*.zip
+
+# Object::Pad
+/object_pad.h
+/XSParseKeyword.h
+/lib/Object/Pad/Eventable.c
