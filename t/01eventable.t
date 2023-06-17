@@ -16,13 +16,12 @@ class Parent :Eventable :does(Object::Pad::Eventable) {
 }
 
 class Example :Eventable :isa(Parent) {
-
    event k;
    event y;
 
-   has $x;
-   has $y;
-   has $z = undef;
+   field $x;
+   field $y;
+   field $z = undef;
 }
 
 my $i = Example->new;
