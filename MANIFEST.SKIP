@@ -19,3 +19,7 @@
 
 # Avoid plx installed dependencies
 \blocal
+
+# Generated files:
+^object_pad.h$
+^XSParseKeyword.h$

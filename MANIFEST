@@ -5,8 +5,6 @@ LICENSE
 MANIFEST                        This list of files
 META.json
 META.yml
-object_pad.h
 README
 t/00use.t
 t/01eventable.t
-XSParseKeyword.h
