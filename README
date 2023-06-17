@@ -1,0 +1,159 @@
+NAME
+
+    Object::Pad::Eventable - A class attribute and role to emit events
+
+SYNOPSIS
+
+      use Object::Pad;
+      use Object::Pad::Eventable;
+    
+      package MyObject 0.001;
+      class MyObject :Eventable :does(Object::Pad::Eventable);
+    
+      event foo;
+    
+      method foo($a) {
+        $self->emit( foo => $a );
+      }
+    
+      1;
+    
+      package main;
+    
+      use MyObject;
+      use Future;
+      use Future::Queue;
+    
+      my $i = MyObject->new;
+    
+      # subscribe to an event once:
+      $i->once( foo => sub { say "Hello" } );
+    
+      # or with a future:
+      my $f = Future->new->on_done( sub { say "Hello" } );
+      $i->on( foo => $f );
+    
+      # subscribe to multiple events:
+      my $subscription = $i->on( foo => sub { say "Hello" } );
+    
+      # or on a queue:
+      my $q = Future::Queue->new;
+      my $subscription_q = $i->on( foo => $q );
+    
+      # then unsubscribe:
+      $i->unsubscribe( $subscription );
+      $i->unsubscribe( $subscription_q );
+    
+      # alternatively, unsubscribe by cancelling the future:
+      $f->cancel;
+    
+      # or by finishing the queue (unsubscribes upon the next event):
+      $q->finish;
+
+DESCRIPTION
+
+    This module makes the :Eventable class attribute available to
+    Object::Pad. When applied to a class, it adds the capability to define
+    and emit events to subscribers. Methods to subscribe to and emit events
+    are provided by the Object::Pad::Eventable role.
+
+    Interested subscribers can provide a code reference, a Future::Queue or
+    a Future to receive events.
+
+METHODS
+
+ on
+
+      my $subscription = $obj->on( foo => sub { ... } );
+      my $subscription = $obj->on( foo => $f );
+      my $subscription = $obj->on( foo => $q );
+
+    Subscribes to notifications of the named event. The event consumer can
+    be a coderef, Future or Future::Queue. In case it's a Future, the
+    consumer will be unsubscribed after a single event.
+
+    Returns a $subscription which can be used to unsubscribe later.
+
+ once
+
+      my $subscription = $obj->once( foo => sub { ... } );
+
+    Subscribes to a single notification of teh named event. This function
+    does not make sense for the Future and Future::Queue subscribers,
+    because Futures are single-notification anyway and Future::Queues are
+    much more easily replaced with Futures for single notifications.
+
+ emit
+
+      $obj->emit( $event_name, $arg1, $arg2, ... )
+
+    Send the event to subscribers. If the subscriber is a coderef, the
+    function is called with the object as the first argument and the values
+    of $arg1, $arg2, ... as further arguments. If the subscriber is a
+    Future, it resolves with the same values as passed to the callback. If
+    the subscriber is a Future::Queue, an arrayref is put in the queue with
+    the elements of the array being the values as passed to the callback.
+
+      # callback style:
+      $sink->( $obj, $arg1, $arg2, ... );
+    
+      # Future style:
+      $f->done( $obj, $arg1, $arg2, ... );
+    
+      # Future::Queue style:
+      $q->push( [ $obj, $arg1, $arg2, ... );
+
+ has_subscribers
+
+      my $bool = $obj->has_subscribers( 'foo' );
+
+    Checks if the named event has subscribers.
+
+ unsubscribe
+
+      $obj->unsubscribe( 'foo' );
+      $obj->unsubscribe( foo => $subscription );
+
+    Remove all subscribers from the named event (when no subscription
+    argument is given) or remove the specific subscription.
+
+    Any pending futures will be cancelled upon unsubscription. Queues will
+    be finished.
+
+    When an object goes out of scope, this function is used to cancel any
+    active subscriptions.
+
+TODO
+
+      * Add event names to the 'Eventable' class attribute data structure
+      instead of in the c<@EVENTS> variable. This requires support from
+      Object::Pad to retrieve the class attribute data (from its API)
+
+      * Restrict the use of the 'event' keyword to classes which have been
+      applied the 'Eventable' attribute
+
+      * Restrict the use of the 'event' keyword to the class definition
+      scope
+
+      * Automatically apply the Object::Pad::Eventable role as part of the
+      application of the class attribute
+
+AUTHOR
+
+      * Erik Huelsmann <ehuels@gmail.com>
+
+    Inspired by Role::EventEmitter by Dan Book, which is itself adapted
+    from Mojolicious. This module and its tests are implemented from
+    scratch.
+
+    With code copied from Object::Pad::Keyword::Accessor and
+    Object::Pad::ClassAttr::Struct by Paul Evans for respectively the event
+    keyword and :Eventable class attribute.
+
+COPYRIGHT AND LICENSE
+
+    This software is copyright (c) 2023 by Erik Huelsmann.
+
+    This is free software; you can redistribute it and/or modify it under
+    the same terms as the Perl 5 programming language system itself.
+
